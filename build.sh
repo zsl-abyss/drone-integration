@@ -1,6 +1,6 @@
-#! /usr/bin/env bash
+#! /usr/bin/env sh
 
 echo "Building the project..."
-echo "------------------------"
+echo "-----------------------"
 echo " "
 echo "Done!"
