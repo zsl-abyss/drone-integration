@@ -11,3 +11,4 @@ steps:
   commands:
   - apt-get update -y
   - apt-get install -y awscli
+  - aws ec2 run-instances --cli-input-json file://input.json
