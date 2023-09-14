@@ -1,13 +1,12 @@
 kind: pipeline
 type: docker
-name: launch-worker
+name: default
 
 steps:
-- name: run-tests
-  image: ubuntu:22.04
-  environment:
-    DEBIAN_FRONTEND: noninteractive
-    DEBCONF_NONINTERACTIVE_SEEN: true
+- name: test
+  image: alpine
   commands:
-  - apt-get update -y
-  - apt-get install -y awscli
+  - echo hello world
+  - pwd
+  - ls
+  - ./build.sh
