@@ -1,0 +1,70 @@
+#cloud-config
+
+# Create the docker group
+groups:
+  - docker
+
+# Add default auto created user to docker group
+system_info:
+  default_user:
+    groups: [docker]
+
+runcmd:
+  # Install Docker and other pre-requisite packages
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+  - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - apt-get update -y
+  - apt-get upgrade -y
+  - apt-get install -y docker-ce docker-ce-cli containerd.io binutils s3fs awscli
+
+  # Enable docker service.
+  - systemctl start docker
+  - systemctl enable docker
+
+  # Mount the S3 buckets.
+  - mkdir -p /mnt/vault
+  - s3fs dataforce-dev:/remotes/vault /mnt/vault -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
+
+  - mkdir -p /mnt/pond
+  - s3fs dataforce-dev:/remotes/pond /mnt/pond -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
+
+  - mkdir -p /mnt/rapid
+  - s3fs dataforce-dev:/remotes/rapid /mnt/rapid -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
+
+  - mkdir -p /mnt/logs
+  - s3fs dataforce-dev:/remotes/logs /mnt/logs -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
+
+  # Run the container.
+  - >
+    aws ecr get-login-password --region ap-southeast-2 |
+      docker login --username AWS --password-stdin 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com
+  - >
+    docker run
+      --detach
+      --rm
+      --volume /mnt/pond:/mnt/pond
+      --volume /mnt/vault:/mnt/vault
+      --volume /mnt/rapid:/mnt/rapid
+      --workdir /root/src/abyss/abyss-fabric
+      325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test
+      make test |
+        xargs docker logs
+          --follow
+          > /mnt/logs/docker-run-make-test.log
+
+          # - >
+          # docker run
+          # --detach
+          # --rm
+          # --volume /mnt/pond:/mnt/pond
+          # --volume /mnt/vault:/mnt/vault
+          # --volume /mnt/rapid:/mnt/rapid
+          # --workdir /root/src/abyss/abyss-fabric
+          # 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test
+          # make test-python-long |
+          # xargs docker logs
+          # --follow
+          # > /mnt/logs/docker-run-make-test-python-long.log
+
+  # Shutdown the instance.
+  - shutdown --poweroff now

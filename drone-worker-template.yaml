@@ -1,0 +1,38 @@
+BlockDeviceMappings:
+- DeviceName: /dev/sda1
+  VirtualName: sda1
+  Ebs:
+    DeleteOnTermination: true
+    VolumeSize: 40
+    VolumeType: gp2
+    Encrypted: false
+ImageId: ami-08f0bc76ca5236b20
+InstanceType: t2.nano
+KeyName: dataforce-dev
+MaxCount: 1
+MinCount: 1
+Monitoring:
+  Enabled: false
+UserData: ${user-data}
+IamInstanceProfile:
+  Name: dataforce-dev-access-profile
+InstanceInitiatedShutdownBehavior: terminate
+NetworkInterfaces:
+- AssociatePublicIpAddress: false
+  DeleteOnTermination: true
+  Description: private
+  DeviceIndex: 0
+  Groups:
+  - sg-032ad43da2c9d3e26
+  SubnetId: subnet-0b92837ec9c5b402e
+TagSpecifications:
+- ResourceType: instance
+  Tags:
+  - Key: Name
+    Value: drone-worker-${git-repository}-${git-branch}-${git-commit}
+  - Key: Git Repository
+    Value: ${git-repository}
+  - Key: Git Branch
+    Value: ${git-branch}
+  - Key: Git Commit
+    Value: ${git-commit}
