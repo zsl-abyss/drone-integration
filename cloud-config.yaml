@@ -35,36 +35,22 @@ runcmd:
   - s3fs dataforce-dev:/remotes/logs /mnt/logs -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
 
   # Run the container.
-  - >
-    aws ecr get-login-password --region ap-southeast-2 |
-      docker login --username AWS --password-stdin 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com
-  - >
-    docker run
-      --detach
-      --rm
-      --volume /mnt/pond:/mnt/pond
-      --volume /mnt/vault:/mnt/vault
-      --volume /mnt/rapid:/mnt/rapid
-      --workdir /root/src/abyss/abyss-fabric
-      325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test
-      make test |
-        xargs docker logs
-          --follow
-          > /mnt/logs/docker-run-make-test.log
+  - aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com
+  - docker run --detach --rm --volume /mnt/pond:/mnt/pond --volume /mnt/vault:/mnt/vault --volume /mnt/rapid:/mnt/rapid --workdir /root/src/abyss/abyss-fabric 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test make test | xargs docker logs --follow > /mnt/logs/docker-run-make-test.log
 
-          # - >
-          # docker run
-          # --detach
-          # --rm
-          # --volume /mnt/pond:/mnt/pond
-          # --volume /mnt/vault:/mnt/vault
-          # --volume /mnt/rapid:/mnt/rapid
-          # --workdir /root/src/abyss/abyss-fabric
-          # 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test
-          # make test-python-long |
-          # xargs docker logs
-          # --follow
-          # > /mnt/logs/docker-run-make-test-python-long.log
+# - >
+# docker run
+# --detach
+# --rm
+# --volume /mnt/pond:/mnt/pond
+# --volume /mnt/vault:/mnt/vault
+# --volume /mnt/rapid:/mnt/rapid
+# --workdir /root/src/abyss/abyss-fabric
+# 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test
+# make test-python-long |
+# xargs docker logs
+# --follow
+# > /mnt/logs/docker-run-make-test-python-long.log
 
   # Shutdown the instance.
   - shutdown --poweroff now

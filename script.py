@@ -48,7 +48,7 @@ def main(
     # Set user data.
     with open("cloud-config.yaml") as fo:
         config = yaml.safe_load(fo)
-        user_data = yaml.dump(config)
+        user_data = yaml.safe_dump(config)
 
     instance["UserData"] = user_data
 

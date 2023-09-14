@@ -1,0 +1,38 @@
+BlockDeviceMappings:
+- DeviceName: /dev/sda1
+  VirtualName: sda1
+  Ebs:
+    DeleteOnTermination: true
+    VolumeSize: 40
+    VolumeType: gp2
+    Encrypted: false
+ImageId: ami-08f0bc76ca5236b20
+InstanceType: t2.nano
+KeyName: dataforce-dev
+MaxCount: 1
+MinCount: 1
+Monitoring:
+  Enabled: false
+UserData: "#cloud-config\n\n# Create the docker group\ngroups:\n  - docker\n\n# Add default auto created user to docker group\nsystem_info:\n  default_user:\n    groups: [docker]\n\nruncmd:\n  # Install Docker and other pre-requisite packages\n  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -\n  - add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\"\n  - apt-get update -y\n  - apt-get upgrade -y\n  - apt-get install -y docker-ce docker-ce-cli containerd.io binutils s3fs awscli\n\n  # Enable docker service.\n  - systemctl start docker\n  - systemctl enable docker\n\n  # Mount the S3 buckets.\n  - mkdir -p /mnt/vault\n  - s3fs dataforce-dev:/remotes/vault /mnt/vault -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp\n\n  - mkdir -p /mnt/pond\n  - s3fs dataforce-dev:/remotes/pond /mnt/pond -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp\n\n  - mkdir -p /mnt/rapid\n  - s3fs dataforce-dev:/remotes/rapid /mnt/rapid -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp\n\n  - mkdir -p /mnt/logs\n  - s3fs dataforce-dev:/remotes/logs /mnt/logs -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp\n\n  # Run the container.\n  - aws ecr get-login-password --region ap-southeast-2 | docker login --username AWS --password-stdin 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com\n  - docker run --detach --rm --volume /mnt/pond:/mnt/pond --volume /mnt/vault:/mnt/vault --volume /mnt/rapid:/mnt/rapid --workdir /root/src/abyss/abyss-fabric 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test make test | xargs docker logs --follow > /mnt/logs/docker-run-make-test.log\n\n# - >\n# docker run\n# --detach\n# --rm\n# --volume /mnt/pond:/mnt/pond\n# --volume /mnt/vault:/mnt/vault\n# --volume /mnt/rapid:/mnt/rapid\n# --workdir /root/src/abyss/abyss-fabric\n# 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test\n# make test-python-long |\n# xargs docker logs\n# --follow\n# > /mnt/logs/docker-run-make-test-python-long.log\n\n  # Shutdown the instance.\n  - shutdown --poweroff now\n"
+IamInstanceProfile:
+  Name: dataforce-dev-access-profile
+InstanceInitiatedShutdownBehavior: terminate
+NetworkInterfaces:
+- AssociatePublicIpAddress: false
+  DeleteOnTermination: true
+  Description: private
+  DeviceIndex: 0
+  Groups:
+  - sg-032ad43da2c9d3e26
+  SubnetId: subnet-0b92837ec9c5b402e
+TagSpecifications:
+- ResourceType: instance
+  Tags:
+  - Key: Name
+    Value: drone-worker-${git-repository}-${git-branch}-${git-commit}
+  - Key: Git Repository
+    Value: ${git-repository}
+  - Key: Git Branch
+    Value: ${git-branch}
+  - Key: Git Commit
+    Value: ${git-commit}
