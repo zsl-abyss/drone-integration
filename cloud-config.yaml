@@ -35,10 +35,10 @@ runcmd:
   - s3fs dataforce-dev:/remotes/logs /mnt/logs -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
 
   # Run the container.
-  - aws --region ap-southeast-2 ec2 describe-tags --filters "Name=resource-id,Values=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)" "Name=key,Values=Name" --query "Tags[0].Value" --output text > instance-name.txt
-  - mkdir -p /mnt/logs/$(cat instance-name.txt)
+  - export INSTANCE_NAME=$(aws --region ap-southeast-2 ec2 describe-tags --filters "Name=resource-id,Values=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)" "Name=key,Values=Name" --query "Tags[0].Value" --output text)
+  - mkdir -p /mnt/logs/$INSTANCE_NAME
   - aws --region ap-southeast-2 ecr get-login-password | docker login --username AWS --password-stdin 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com
-  - docker run --detach --rm --volume /mnt/pond:/mnt/pond --volume /mnt/vault:/mnt/vault --volume /mnt/rapid:/mnt/rapid --workdir /root/src/abyss/abyss-fabric 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test make test | xargs docker logs --follow > /mnt/logs/$(cat instance-name)/docker-run-make-test.log
+  - docker run --detach --rm --volume /mnt/pond:/mnt/pond --volume /mnt/vault:/mnt/vault --volume /mnt/rapid:/mnt/rapid --workdir /root/src/abyss/abyss-fabric 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test make test | xargs docker logs --follow > /mnt/logs/$INSTANCE_NAME/docker-run-make-test.log
 
 # - >
 # docker run
