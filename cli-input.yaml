@@ -18,9 +18,9 @@ IamInstanceProfile:
   Name: dataforce-dev-access-profile
 InstanceInitiatedShutdownBehavior: terminate
 NetworkInterfaces:
-- AssociatePublicIpAddress: false
+- AssociatePublicIpAddress: true
   DeleteOnTermination: true
-  Description: private
+  Description: public
   DeviceIndex: 0
   Groups:
   - sg-032ad43da2c9d3e26
