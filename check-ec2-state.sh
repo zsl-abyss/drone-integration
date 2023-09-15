@@ -75,6 +75,7 @@ function check_state()
 
 function poll_state()
 {
+    set -x
     counter=1
     until check_state || [[ $counter == $poll_attempts ]]
     do

@@ -2,9 +2,17 @@ kind: pipeline
 type: docker
 name: run-tests
 
+volumes:
+  - name: logs
+    host:
+      path: /mnt/logs
+
 steps:
 - name: launch-worker
   image: ubuntu:22.04
+  volumes:
+  - name: logs
+    path: /mnt/logs
   environment:
     DEBIAN_FRONTEND: noninteractive
     DEBCONF_NONINTERACTIVE_SEEN: true
@@ -18,5 +26,5 @@ steps:
   - aws --region ap-southeast-2 ec2 run-instances --cli-input-yaml file://cli-input.yaml
   - export INSTANCE_NAME=drone-worker:$DRONE_REPO:$DRONE_COMMIT_BRANCH:$DRONE_COMMIT_SHA
   - echo "Waiting for $INSTANCE_NAME to terminate..."
-  - ./check-ec2-state.sh $INSTANCE_NAME terminated 5 -1
+  - ./check-ec2-state.sh $INSTANCE_NAME terminated 12 -1
   - head -n -0 /mnt/logs/$INSTANCE_NAME/*
