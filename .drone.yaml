@@ -25,6 +25,7 @@ steps:
   - ./script.py $DRONE_REPO $DRONE_COMMIT_BRANCH $DRONE_COMMIT_SHA
   - aws --region ap-southeast-2 ec2 run-instances --cli-input-yaml file://cli-input.yaml
   - export INSTANCE_NAME=drone-worker:$DRONE_REPO:$DRONE_COMMIT_BRANCH:$DRONE_COMMIT_SHA
+  - export LOGS_DIR=/mnt/logs/$INSTANCE_NAME
   - echo "Waiting for $INSTANCE_NAME to terminate..."
   - ./check-ec2-state.sh $INSTANCE_NAME terminated 12 -1
-  - head -n -0 /mnt/logs/$INSTANCE_NAME/*
+  - if [ $(ls $LOGS_DIR) ]; then head -n -0 $LOGS_DIR/*; fi
