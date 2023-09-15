@@ -82,9 +82,9 @@ function poll_state()
         sleep $poll_freq
         [[ $poll_attempts > 0 ]] && ((counter++))
     done
-    state_match=$?
+    state_match=check_state
     [[ $counter == $poll_attempts ]] && return 2
-    return $state_match
+    return $((state_match))
 }
 
 instance_name=$1
