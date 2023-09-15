@@ -17,15 +17,22 @@ steps:
     DEBIAN_FRONTEND: noninteractive
     DEBCONF_NONINTERACTIVE_SEEN: true
   commands:
+  # Install pre-requisite packages/software.
   - apt-get update -y
   - apt-get install -y curl jq python3 python3-pip python3-yaml unzip
   - curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
   - unzip awscliv2.zip
   - ./aws/install
+
+  # Create specification of drone worker's instance and run that instance.
   - ./script.py $DRONE_REPO $DRONE_COMMIT_BRANCH $DRONE_COMMIT_SHA
   - aws --region ap-southeast-2 ec2 run-instances --cli-input-yaml file://cli-input.yaml
+
+  # Wait for the instance to terminate and collect generated logs (if any).
   - export INSTANCE_NAME=drone-worker:$DRONE_REPO:$DRONE_COMMIT_BRANCH:$DRONE_COMMIT_SHA
   - export LOGS_DIR=/mnt/logs/$INSTANCE_NAME
   - echo "Waiting for $INSTANCE_NAME to terminate..."
   - ./check-ec2-state.sh $INSTANCE_NAME terminated 12 -1
   - if [ $(ls $LOGS_DIR) ]; then head -n -0 $LOGS_DIR/*; fi
+
+  # TODO: determine success/failure
