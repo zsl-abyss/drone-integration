@@ -14,5 +14,6 @@ steps:
   - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
   - unzip awscliv2.zip
   - ./aws/install
+  - ./script.py $DRONE_REPO $DRONE_COMMIT_BRANCH $DRONE_COMMIT_SHA
   - aws ec2 --region ap-southeast-2 run-instances --cli-input-yaml file://cli-input.yaml
   # - head -n -0 /mnt/logs/*
