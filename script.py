@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import sys
 
 import yaml
@@ -20,7 +20,7 @@ def main(
             instance["TagSpecifications"][0]["Tags"],
         )
     )
-    tag["Value"] = f"drone-worker-{git_repository}-{git_branch}-{git_commit}"
+    tag["Value"] = f"drone-worker:{git_repository}:{git_branch}:{git_commit}"
 
     # Set git repository, branch and commit hash.
     tag = next(

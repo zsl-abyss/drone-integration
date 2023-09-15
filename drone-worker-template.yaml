@@ -7,7 +7,7 @@ BlockDeviceMappings:
     VolumeType: gp2
     Encrypted: false
 ImageId: ami-08f0bc76ca5236b20
-InstanceType: t2.nano
+InstanceType: m6i.4xlarge # vCPU:16, GiB:64, $:0.96
 KeyName: dataforce-dev
 MaxCount: 1
 MinCount: 1
@@ -29,7 +29,7 @@ TagSpecifications:
 - ResourceType: instance
   Tags:
   - Key: Name
-    Value: drone-worker-${git-repository}-${git-branch}-${git-commit}
+    Value: drone-worker:${git-repository}:${git-branch}:${git-commit}
   - Key: Git Repository
     Value: ${git-repository}
   - Key: Git Branch

@@ -10,7 +10,7 @@ IamInstanceProfile:
   Name: dataforce-dev-access-profile
 ImageId: ami-08f0bc76ca5236b20
 InstanceInitiatedShutdownBehavior: terminate
-InstanceType: t2.nano
+InstanceType: r6g.medium
 KeyName: dataforce-dev
 MaxCount: 1
 MinCount: 1
@@ -28,13 +28,13 @@ TagSpecifications:
 - ResourceType: instance
   Tags:
   - Key: Name
-    Value: drone-worker-drone-integration-main-4897ade
+    Value: drone-worker-DRONE_REPO-DRONE_COMMIT_BRANCH-DRONE_COMMIT_SHA
   - Key: Git Repository
-    Value: drone-integration
+    Value: DRONE_REPO
   - Key: Git Branch
-    Value: main
+    Value: DRONE_COMMIT_BRANCH
   - Key: Git Commit
-    Value: 4897ade
+    Value: DRONE_COMMIT_SHA
 UserData: "#cloud-config\ngroups:\n- docker\nruncmd:\n- curl -fsSL https://download.docker.com/linux/ubuntu/gpg\
   \ | apt-key add -\n- add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu\
   \ $(lsb_release\n  -cs) stable\"\n- apt-get update -y\n- apt-get upgrade -y\n- apt-get\
