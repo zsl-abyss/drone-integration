@@ -26,7 +26,7 @@ steps:
 
   # Create specification of drone worker's instance and run that instance.
   - ./create-cli-input-yaml.py $DRONE_REPO $DRONE_COMMIT_BRANCH $DRONE_COMMIT_SHA
-  - aws --region ap-southeast-2 ec2 run-instances --cli-input-yaml file://cli-input.yaml
+  - aws ec2 run-instances --region ap-southeast-2 --cli-input-yaml file://cli-input.yaml
 
   # Wait for the instance to terminate and collect generated logs (if any).
   - export INSTANCE_NAME=drone-worker:$DRONE_REPO:$DRONE_COMMIT_BRANCH:$DRONE_COMMIT_SHA
@@ -35,4 +35,11 @@ steps:
   - ./check-ec2-state.sh $INSTANCE_NAME terminated 12 -1
   - if [ "$(ls $LOGS_DIR)" ]; then head -n -0 $LOGS_DIR/*; fi
 
-  # TODO: determine success/failure
+  # Determine success/failure.
+  - |
+    for logname in $LOGS_DIR/docker-run-*.log; do
+      exit_code=$(tail -n 1 $logname)
+      if [ $exit_code != 0 ]; then
+        exit 1
+      fi
+    done

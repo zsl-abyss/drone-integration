@@ -9,6 +9,7 @@ system_info:
   default_user:
     groups: [docker]
 
+# Update and upgrade packages.
 package_upgrade: true
 
 runcmd:
