@@ -1,16 +1,18 @@
 #cloud-config
 
-# Create the docker group
+# Create the docker group.
 groups:
   - docker
 
-# Add default auto created user to docker group
+# Add default auto created user to docker group.
 system_info:
   default_user:
     groups: [docker]
 
+package_upgrade: true
+
 runcmd:
-  # Install Docker and other pre-requisite packages
+  # Install pre-requisite packages and Docker.
   - |
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
       apt-key add -
@@ -18,21 +20,20 @@ runcmd:
     add-apt-repository \
       "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - apt-get update -y
-  - apt-get upgrade -y
   - |
     apt-get install -y \
-      awscli \
-      binutils \
       containerd.io \
       docker-ce \
       docker-ce-cli \
-      s3fs \
+      awscli \
+      binutils \
+      s3fs
 
   # Enable docker service.
   - systemctl start docker
   - systemctl enable docker
 
-  # Mount the S3 buckets.
+  # Mount S3 buckets.
   - |
     for dn in logs pond rapid vault; do
       mkdir -p /mnt/$dn
@@ -50,12 +51,12 @@ runcmd:
   - export INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
   - |
     export INSTANCE_NAME=$(
-        aws ec2 describe-tags \
+      aws ec2 describe-tags \
         --region ap-southeast-2 \
         --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=Name" \
         --query "Tags[0].Value" \
         --output text
-      )
+    )
   - export LOGS_DIR=/mnt/logs/$INSTANCE_NAME
   - mkdir -p $LOGS_DIR
 
@@ -68,35 +69,31 @@ runcmd:
         --password-stdin \
         $ECR
 
-  # - run `make test'
+  # The commands from runcmd are run with /bin/sh but here we want to use a
+  # bash'es Parameter Expansion.
   - |
-    docker run \
-      --volume /mnt/pond:/mnt/pond \
-      --volume /mnt/vault:/mnt/vault \
-      --volume /mnt/rapid:/mnt/rapid \
-      --workdir /root/src/abyss/abyss-fabric \
-      --detach \
-      --rm \
-      $IMAGE_URI \
-      make test |
-        xargs docker logs --follow \
-        > $LOGS_DIR/docker-run-make-test.log
+    bash -c '
+      for command in "make test" "make test-python-long"; do
+        container_id=$(
+          docker run \
+            --volume /mnt/pond:/mnt/pond \
+            --volume /mnt/vault:/mnt/vault \
+            --volume /mnt/rapid:/mnt/rapid \
+            --workdir /root/src/abyss/abyss-fabric \
+            --detach \
+            $IMAGE_URI \
+            $command
+        )
+        exit_code=$(docker container wait $container_id)
+        logname_part=${command// /-}
+        docker container logs $container_id \
+          > $LOGS_DIR/docker-run-$logname_part.log
+        echo $exit_code >> $LOGS_DIR/docker-run-$logname_part.log
+        docker container rm $container_id
+      done
+    '
 
-  # - run `make test-python-long'
-  - |
-    docker run \
-      --volume /mnt/pond:/mnt/pond \
-      --volume /mnt/vault:/mnt/vault \
-      --volume /mnt/rapid:/mnt/rapid \
-      --workdir /root/src/abyss/abyss-fabric \
-      --detach \
-      --rm \
-      $IMAGE_URI \
-      make test-python-long |
-        xargs docker logs --follow \
-        > $LOGS_DIR/docker-run-make-test-python-long.log
-
-  # Copy cloud-init log files for more detailed logging data. 
+  # cloud-init log files include more detailed logging data.
   - cp /var/log/cloud-init* $LOGS_DIR/
 
   # Shutdown the instance.
