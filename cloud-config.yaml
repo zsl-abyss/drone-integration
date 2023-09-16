@@ -11,39 +11,93 @@ system_info:
 
 runcmd:
   # Install Docker and other pre-requisite packages
-  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-  - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
+      apt-key add -
+  - |
+    add-apt-repository \
+      "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - apt-get update -y
   - apt-get upgrade -y
-  - apt-get install -y docker-ce docker-ce-cli containerd.io binutils s3fs awscli
+  - |
+    apt-get install -y \
+      awscli \
+      binutils \
+      containerd.io \
+      docker-ce \
+      docker-ce-cli \
+      s3fs \
 
   # Enable docker service.
   - systemctl start docker
   - systemctl enable docker
 
   # Mount the S3 buckets.
-  - mkdir -p /mnt/vault
-  - s3fs dataforce-dev:/remotes/vault /mnt/vault -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
+  - |
+    for dn in logs pond rapid vault; do
+      mkdir -p /mnt/$dn
+      s3fs \
+        dataforce-dev:/remotes/$dn /mnt/$dn \
+        -o iam_role=dataforce-dev-access \
+        -o url=http://s3.ap-southeast-2.amazonaws.com \
+        -o allow_other \
+        -o use_cache=/tmp
+    done
 
-  - mkdir -p /mnt/pond
-  - s3fs dataforce-dev:/remotes/pond /mnt/pond -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
-
-  - mkdir -p /mnt/rapid
-  - s3fs dataforce-dev:/remotes/rapid /mnt/rapid -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
-
-  - mkdir -p /mnt/logs
-  - s3fs dataforce-dev:/remotes/logs /mnt/logs -o iam_role=dataforce-dev-access -o url=http://s3.ap-southeast-2.amazonaws.com -o allow_other -o use_cache=/tmp
+  # Setup environment.
+  - export ECR=325729004853.dkr.ecr.ap-southeast-2.amazonaws.com
+  - export IMAGE_URI=$ECR/abyss/abyss-fabric:test
+  - export INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+  - |
+    export INSTANCE_NAME=$(
+        aws ec2 describe-tags \
+        --region ap-southeast-2 \
+        --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=key,Values=Name" \
+        --query "Tags[0].Value" \
+        --output text
+      )
+  - export LOGS_DIR=/mnt/logs/$INSTANCE_NAME
+  - mkdir -p $LOGS_DIR
 
   # Run tests on docker containers.
-  - export INSTANCE_NAME=$(aws --region ap-southeast-2 ec2 describe-tags --filters "Name=resource-id,Values=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)" "Name=key,Values=Name" --query "Tags[0].Value" --output text)
-  - mkdir -p /mnt/logs/$INSTANCE_NAME
-  - aws --region ap-southeast-2 ecr get-login-password | docker login --username AWS --password-stdin 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com
+  - |
+    aws ecr get-login-password \
+      --region ap-southeast-2 |
+      docker login \
+        --username AWS \
+        --password-stdin \
+        $ECR
 
-  # - short tests
-  - docker run --detach --rm --volume /mnt/pond:/mnt/pond --volume /mnt/vault:/mnt/vault --volume /mnt/rapid:/mnt/rapid --workdir /root/src/abyss/abyss-fabric 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test make test | xargs docker logs --follow > /mnt/logs/$INSTANCE_NAME/docker-run-make-test.log
+  # - run `make test'
+  - |
+    docker run \
+      --volume /mnt/pond:/mnt/pond \
+      --volume /mnt/vault:/mnt/vault \
+      --volume /mnt/rapid:/mnt/rapid \
+      --workdir /root/src/abyss/abyss-fabric \
+      --detach \
+      --rm \
+      $IMAGE_URI \
+      make test |
+        xargs docker logs --follow \
+        > $LOGS_DIR/docker-run-make-test.log
 
-  # - long tests
-  - docker run --detach --rm --volume /mnt/pond:/mnt/pond --volume /mnt/vault:/mnt/vault --volume /mnt/rapid:/mnt/rapid --workdir /root/src/abyss/abyss-fabric 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/abyss/abyss-fabric:test make test-python-long | xargs docker logs --follow > /mnt/logs/$INSTANCE_NAME/docker-run-make-test-python-long.log
+  # - run `make test-python-long'
+  - |
+    docker run \
+      --volume /mnt/pond:/mnt/pond \
+      --volume /mnt/vault:/mnt/vault \
+      --volume /mnt/rapid:/mnt/rapid \
+      --workdir /root/src/abyss/abyss-fabric \
+      --detach \
+      --rm \
+      $IMAGE_URI \
+      make test-python-long |
+        xargs docker logs --follow \
+        > $LOGS_DIR/docker-run-make-test-python-long.log
+
+  # Copy cloud-init log files for more detailed logging data. 
+  - cp /var/log/cloud-init* $LOGS_DIR/
 
   # Shutdown the instance.
   - shutdown --poweroff now
