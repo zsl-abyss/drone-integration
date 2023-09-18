@@ -61,6 +61,9 @@ runcmd:
   - export LOGS_DIR=/mnt/logs/$INSTANCE_NAME
   - mkdir -p $LOGS_DIR
 
+  # Constitution test deploys to this instance of mongodb.
+  - docker run --rm --network host --detach mongo
+
   # Run tests on docker containers.
   - |
     aws ecr get-login-password \
@@ -70,29 +73,31 @@ runcmd:
         --password-stdin \
         $ECR
 
-  # The commands from runcmd are run with /bin/sh but here we want to use a
-  # bash'es Parameter Expansion.
   - |
-    bash -c '
-      for command in "make test" "make test-python-long"; do
-        container_id=$(
-          docker run \
-            --volume /mnt/pond:/mnt/pond \
-            --volume /mnt/vault:/mnt/vault \
-            --volume /mnt/rapid:/mnt/rapid \
-            --workdir /root/src/abyss/abyss-fabric \
-            --detach \
-            $IMAGE_URI \
-            $command
-        )
-        exit_code=$(docker container wait $container_id)
-        logname_part=${command// /-}
-        docker container logs $container_id \
-          > $LOGS_DIR/docker-run-$logname_part.log
-        echo $exit_code >> $LOGS_DIR/docker-run-$logname_part.log
-        docker container rm $container_id
-      done
-    '
+    # "make test" \
+    # "make test-python-long" \
+    # "make test-constitution-gold-ri"
+    for command in \
+    "make test-constitution-gold"
+    do
+      container_id=$(
+        docker run \
+          --network host \
+          --volume /mnt/pond:/mnt/pond \
+          --volume /mnt/vault:/mnt/vault \
+          --volume /mnt/rapid:/mnt/rapid \
+          --workdir /root/src/abyss/abyss-fabric \
+          --detach \
+          $IMAGE_URI \
+          $command
+      )
+      exit_code=$(docker container wait $container_id)
+      logname_part=$(echo $command | sed 's/ /-/g')
+      docker container logs $container_id \
+        > $LOGS_DIR/docker-run-$logname_part.log
+      echo $exit_code >> $LOGS_DIR/docker-run-$logname_part.log
+      docker container rm $container_id
+    done
 
   # cloud-init log files include more detailed logging data.
   - cp /var/log/cloud-init* $LOGS_DIR/

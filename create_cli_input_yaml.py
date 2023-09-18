@@ -1,6 +1,17 @@
 #! /usr/bin/env python3
-import sys
 
+"""
+This scrip reads content of the `drone-worker-template.yaml' and
+`cloud-config.yaml' files and creates a `cli-input.yaml' so it can be be
+provided as the `--cli-input-yaml' option of the AWS CLI command `aws ec2
+run-instances'. For example:
+  aws ec2 run-instances --cli-input-yaml file://cli-input.yaml
+"""
+
+
+import argparse
+
+import __main__
 import yaml
 
 
@@ -58,9 +69,33 @@ def main(
 
 
 if __name__ == "__main__":
-    git_repository = sys.argv[1]
-    git_branch = sys.argv[2]
-    git_commit = sys.argv[3]
+    parser = argparse.ArgumentParser(
+        description=__main__.__doc__,
+    )
+    parser.add_argument(
+        "git_repository",
+        nargs="?",
+        default="{git-repository}",
+        help="Full name of the repository, e.g. 'abyss/abyss-fabric'",
+    )
+    parser.add_argument(
+        "git_branch",
+        nargs="?",
+        default="{git-branch}",
+        help="Branch name, e.g. 'master'",
+    )
+    parser.add_argument(
+        "git_commit",
+        nargs="?",
+        default="{git-commit}",
+        help="Commit hash, e.g. 'a1b2c3d4'",
+    )
+    args = parser.parse_args()
+
+    git_repository = args.git_repository
+    git_branch = args.git_branch
+    git_commit = args.git_commit
+
     main(
         git_repository=git_repository,
         git_branch=git_branch,
