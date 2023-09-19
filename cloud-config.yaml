@@ -82,6 +82,7 @@ runcmd:
     do
       container_id=$(
         docker run \
+          --env TERM=dumb \
           --network host \
           --volume /mnt/pond:/mnt/pond \
           --volume /mnt/vault:/mnt/vault \
