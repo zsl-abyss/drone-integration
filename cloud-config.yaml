@@ -34,10 +34,14 @@ runcmd:
   - systemctl start docker
   - systemctl enable docker
 
-  # Mount S3 buckets.
+  # Create mount points.
   - |
     for dn in logs pond rapid vault; do
       mkdir -p /mnt/$dn
+    done
+  # Mount S3 buckets.
+  - |
+    for dn in pond vault; do
       s3fs \
         dataforce-dev:/remotes/$dn /mnt/$dn \
         -o iam_role=dataforce-dev-access \
@@ -102,6 +106,12 @@ runcmd:
 
   # cloud-init log files include more detailed logging data.
   - cp /var/log/cloud-init* $LOGS_DIR/
+
+  # Copy locally generated data to S3 bucket.
+  - |
+    for dn in logs rapid; do
+      aws s3 cp --recursive /mnt/$dn s3://dataforce-dev/remotes/$dn
+    done
 
   # Shutdown the instance.
   - shutdown --poweroff now
