@@ -30,12 +30,12 @@ TagSpecifications:
 - ResourceType: instance
   Tags:
   - Key: Name
-    Value: drone-worker:${git-repository}:${git-branch}:${git-commit}:${drone-build-number}
+    Value: drone-worker:{git-repository}:{git-branch}:{git-commit}:{drone-build-number}
   - Key: Git Repository
-    Value: ${git-repository}
+    Value: {git-repository}
   - Key: Git Branch
-    Value: ${git-branch}
+    Value: {git-branch}
   - Key: Git Commit
-    Value: ${git-commit}
+    Value: {git-commit}
   - Key: Drone Build Number
-    Value: ${drone-build-number}
+    Value: {drone-build-number}
