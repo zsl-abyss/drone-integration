@@ -80,9 +80,9 @@ runcmd:
   - |
     # "make test-python-long"
     # "make test-constitution-gold"
-    # "make test"
+    # "make test-constitution-gold-ri"
     for command in \
-      "make test-constitution-gold-ri"
+      "make test"
     do
       container_id=$(
         docker run \
