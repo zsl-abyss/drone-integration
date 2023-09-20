@@ -19,42 +19,34 @@ def main(
     git_repository: str,
     git_branch: str,
     git_commit: str,
+    drone_build_number: str,
 ):
     # Load instance template.
     with open("drone-worker-template.yaml") as fo:
         instance = yaml.safe_load(fo)
 
-    # Set instance name.
-    tag = next(
-        filter(
-            lambda el: el["Key"] == "Name",
-            instance["TagSpecifications"][0]["Tags"],
-        )
+    # Set tags for: git repository, branch, commit hash, build number and
+    # instance name.
+    instance_name = (
+        f"drone-worker:{git_repository}:{git_branch}:{git_commit}:{drone_build_number}"
     )
-    tag["Value"] = f"drone-worker:{git_repository}:{git_branch}:{git_commit}"
-
-    # Set git repository, branch and commit hash.
-    tag = next(
-        filter(
-            lambda el: el["Key"] == "Git Repository",
-            instance["TagSpecifications"][0]["Tags"],
-        )
+    metadata = dict(
+        (
+            ("Git Repository", git_repository),
+            ("Git Branch", git_branch),
+            ("Git Commit", git_commit),
+            ("Drone Build Number", drone_build_number),
+            ("Name", instance_name),
+        ),
     )
-    tag["Value"] = git_repository
-    tag = next(
-        filter(
-            lambda el: el["Key"] == "Git Branch",
-            instance["TagSpecifications"][0]["Tags"],
+    for key, value in metadata.items():
+        tag = next(
+            filter(
+                lambda el: el["Key"] == key,
+                instance["TagSpecifications"][0]["Tags"],
+            )
         )
-    )
-    tag["Value"] = git_branch
-    tag = next(
-        filter(
-            lambda el: el["Key"] == "Git Commit",
-            instance["TagSpecifications"][0]["Tags"],
-        )
-    )
-    tag["Value"] = git_commit
+        tag["Value"] = value
 
     # Set user data.
     with open("cloud-config.yaml") as fo:
@@ -90,14 +82,22 @@ if __name__ == "__main__":
         default="{git-commit}",
         help="Commit hash, e.g. 'a1b2c3d4'",
     )
+    parser.add_argument(
+        "drone_build_number",
+        nargs="?",
+        default="{drone-build-number}",
+        help="Build number, e.g. '42'",
+    )
     args = parser.parse_args()
 
     git_repository = args.git_repository
     git_branch = args.git_branch
     git_commit = args.git_commit
+    drone_build_number = args.drone_build_number
 
     main(
         git_repository=git_repository,
         git_branch=git_branch,
         git_commit=git_commit,
+        drone_build_number=drone_build_number,
     )
