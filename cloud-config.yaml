@@ -108,7 +108,7 @@ runcmd:
   # Copy locally generated data to S3 bucket.
   - |
     for dn in logs rapid; do
-      aws s3 cp --recursive /mnt/$dn s3://dataforce-dev/remotes/$dn
+      aws s3 cp --recursive --no-follow-symlinks /mnt/$dn s3://dataforce-dev/remotes/$dn
     done
 
   # Shutdown the instance.
