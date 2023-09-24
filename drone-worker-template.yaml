@@ -3,11 +3,10 @@ BlockDeviceMappings:
   VirtualName: sda1
   Ebs:
     DeleteOnTermination: true
-    VolumeSize: 40
+    VolumeSize: 96
     VolumeType: gp2
     Encrypted: false
 ImageId: ami-08f0bc76ca5236b20
-# InstanceType: m6i.4xlarge # vCPU:16, GiB:64, $:0.96
 InstanceType: m6i.8xlarge # vCPU:32, GiB:128, $:1.92
 KeyName: dataforce-dev
 MaxCount: 1
