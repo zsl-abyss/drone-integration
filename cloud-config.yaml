@@ -78,11 +78,9 @@ runcmd:
         $ECR
 
   - |
-    # "make test-python-long"
-    # "make test-constitution-gold"
-    # "make test-constitution-gold-ri"
+    # "make test"
     for command in \
-      "make test"
+      "make test-python-long"
     do
       container_id=$(
         docker run \
