@@ -79,6 +79,7 @@ runcmd:
 
   - |
     # "make test"
+    # "echo Hello"
     for command in \
       "make test-python-long"
     do

@@ -22,7 +22,7 @@ def main(
     drone_build_number: str,
 ):
     # Load instance template.
-    with open("drone-worker-template.yaml") as fo:
+    with open("./drone/drone-worker-template.yaml") as fo:
         instance = yaml.safe_load(fo)
 
     # Set tags for: git repository, branch, commit hash, build number and
@@ -49,7 +49,7 @@ def main(
         tag["Value"] = value
 
     # Set user data.
-    with open("cloud-config.yaml") as fo:
+    with open("./drone/cloud-config.yaml") as fo:
         config = yaml.safe_load(fo)
         user_data = "#cloud-config\n" + yaml.safe_dump(config)
 

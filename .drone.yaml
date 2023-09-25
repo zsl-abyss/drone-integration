@@ -25,14 +25,14 @@ steps:
   - ./aws/install
 
   # Create specification of drone worker's instance and run that instance.
-  - ./create_cli_input_yaml.py $DRONE_REPO $DRONE_COMMIT_BRANCH $DRONE_COMMIT_SHA $DRONE_BUILD_NUMBER
+  - ./drone/create_cli_input_yaml.py $DRONE_REPO $DRONE_COMMIT_BRANCH $DRONE_COMMIT_SHA $DRONE_BUILD_NUMBER
   - aws ec2 run-instances --region ap-southeast-2 --cli-input-yaml file://cli-input.yaml
 
   # Wait for the instance to terminate and collect generated logs (if any).
   - export INSTANCE_NAME=drone-worker:$DRONE_REPO:$DRONE_COMMIT_BRANCH:$DRONE_COMMIT_SHA:$DRONE_BUILD_NUMBER
   - export LOGS_DIR=/mnt/logs/$INSTANCE_NAME
   - echo "Waiting for $INSTANCE_NAME to terminate..."
-  - ./check-ec2-state.sh $INSTANCE_NAME terminated 12 -1
+  - ./drone/check-ec2-state.sh $INSTANCE_NAME terminated 12 -1
   - if [ "$(ls $LOGS_DIR)" ]; then head -n -0 $LOGS_DIR/*; fi
 
   # Determine success/failure.
