@@ -77,11 +77,11 @@ runcmd:
         $ECR
 
   - |
-    # "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py"
+    # "echo Hello"
     # "make test"
     # "make test-python-long"
     for command in \
-      "echo Hello"
+      "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py::test_constitution_gold"
     do
       container_id=$(
         docker run \
@@ -89,16 +89,13 @@ runcmd:
           --volume $AUTOMATED_TESTING_DIR/abyss-fabric/workflows/final-deployment/constitution-test/input-data/other:/mnt/pond/processed/abyss-internal \
           --volume $AUTOMATED_TESTING_DIR/abyss-fabric:$AUTOMATED_TESTING_DIR/abyss-fabric \
           --network host \
-          --volume /mnt/pond:/mnt/pond \
-          --volume /mnt/vault:/mnt/vault \
-          --volume /mnt/rapid:/mnt/rapid \
           --workdir /root/src/abyss/abyss-fabric \
           --detach \
           $IMAGE_URI \
           $command
       )
       exit_code=$(docker container wait $container_id)
-      logname_part=$(echo $command | sed 's/ /-/g')
+      logname_part=$(echo $command | sed -E 's/[^_[:alnum:]]/-/g')
       docker container logs $container_id \
         > $LOGS_DIR/docker-run-$logname_part.log
       echo $exit_code >> $LOGS_DIR/docker-run-$logname_part.log
