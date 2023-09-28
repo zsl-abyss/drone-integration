@@ -35,20 +35,19 @@ runcmd:
   - systemctl enable docker
 
   # Create mount points.
+  - export AUTOMATED_TESTING_DIR=/mnt/vault/datasets/abyss-internal/automated-testing
   - |
-    for dn in logs pond rapid vault; do
-      mkdir -p /mnt/$dn
+    for dn in /mnt/logs /mnt/rapid $AUTOMATED_TESTING_DIR; do
+      mkdir -p $dn
     done
-  # Mount S3 buckets.
+  # Mount S3 bucket(s).
   - |
-    for dn in pond vault; do
-      s3fs \
-        dataforce-dev:/remotes/$dn /mnt/$dn \
-        -o iam_role=dataforce-dev-access \
-        -o url=http://s3.ap-southeast-2.amazonaws.com \
-        -o allow_other \
-        -o use_cache=/tmp
-    done
+    s3fs \
+      dataforce-dev:/automated-testing $AUTOMATED_TESTING_DIR \
+      -o iam_role=dataforce-dev-access \
+      -o url=http://s3.ap-southeast-2.amazonaws.com \
+      -o allow_other \
+      -o use_cache=/tmp
 
   # Setup environment.
   - export ECR=325729004853.dkr.ecr.ap-southeast-2.amazonaws.com
@@ -78,14 +77,17 @@ runcmd:
         $ECR
 
   - |
+    # "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py"
     # "make test"
-    # "echo Hello"
+    # "make test-python-long"
     for command in \
-      "make test-python-long"
+      "echo Hello"
     do
       container_id=$(
         docker run \
           --env TERM=dumb \
+          --volume $AUTOMATED_TESTING_DIR/abyss-fabric/workflows/final-deployment/constitution-test/input-data/other:/mnt/pond/processed/abyss-internal \
+          --volume $AUTOMATED_TESTING_DIR/abyss-fabric:$AUTOMATED_TESTING_DIR/abyss-fabric \
           --network host \
           --volume /mnt/pond:/mnt/pond \
           --volume /mnt/vault:/mnt/vault \
