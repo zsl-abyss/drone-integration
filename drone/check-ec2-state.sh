@@ -76,7 +76,7 @@ function check_state()
 function poll_state()
 {
     counter=1
-    until check_state || [[ $counter >= $poll_attempts ]]
+    until check_state || [[ $counter -eg $poll_attempts ]]
     do
         sleep $poll_freq
         [[ $poll_attempts > 0 ]] && ((counter++))
