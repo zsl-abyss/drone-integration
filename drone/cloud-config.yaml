@@ -103,7 +103,7 @@ runcmd:
     done
 
   # cloud-init log files include more detailed logging data.
-  - cp /var/log/cloud-init* $LOGS_DIR/
+  # - cp /var/log/cloud-init* $LOGS_DIR/
 
   # Copy locally generated data to S3 bucket.
   - |
