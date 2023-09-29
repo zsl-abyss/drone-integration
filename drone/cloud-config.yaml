@@ -77,11 +77,11 @@ runcmd:
         $ECR
 
   - |
-    # "echo Hello"
     # "make test"
     # "make test-python-long"
+    # "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py::test_constitution_gold"
     for command in \
-      "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py::test_constitution_gold"
+      "echo Hello"
     do
       container_id=$(
         docker run \
