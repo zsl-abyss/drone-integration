@@ -1,39 +1,9 @@
 #cloud-config
 
-# Create the docker group.
-groups:
-  - docker
-
-# Add default auto created user to docker group.
-system_info:
-  default_user:
-    groups: [docker]
-
 # Update and upgrade packages.
 package_upgrade: true
 
 runcmd:
-  # Install pre-requisite packages and Docker.
-  - |
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg |
-      apt-key add -
-  - |
-    add-apt-repository \
-      "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  - apt-get update -y
-  - |
-    apt-get install -y \
-      containerd.io \
-      docker-ce \
-      docker-ce-cli \
-      awscli \
-      binutils \
-      s3fs
-
-  # Enable docker service.
-  - systemctl start docker
-  - systemctl enable docker
-
   # Create mount points.
   - export AUTOMATED_TESTING_DIR=/mnt/vault/datasets/abyss-internal/automated-testing
   - |
