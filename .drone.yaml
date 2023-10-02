@@ -9,7 +9,10 @@ volumes:
 
 steps:
 - name: launch-worker
-  image: ubuntu:22.04
+
+  # The pre-requisite packages/software are already present in this image.
+  image: 325729004853.dkr.ecr.ap-southeast-2.amazonaws.com/ubuntu:22.04-for-launch-worker
+
   volumes:
   - name: logs
     path: /mnt/logs
@@ -17,13 +20,6 @@ steps:
     DEBIAN_FRONTEND: noninteractive
     DEBCONF_NONINTERACTIVE_SEEN: true
   commands:
-  # Install pre-requisite packages/software.
-  - apt-get update -y
-  - apt-get install -y curl jq python3 python3-pip python3-yaml unzip
-  - curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-  - unzip awscliv2.zip
-  - ./aws/install
-
   # Create specification of drone worker's instance and run that instance.
   - ./drone/create_cli_input_yaml.py $DRONE_REPO $DRONE_COMMIT_BRANCH $DRONE_COMMIT_SHA $DRONE_BUILD_NUMBER
   - aws ec2 run-instances --region ap-southeast-2 --cli-input-yaml file://cli-input.yaml
