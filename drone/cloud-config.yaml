@@ -81,7 +81,8 @@ runcmd:
     # "make test-python-long"
     # "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py::test_constitution_gold"
     for command in \
-      "echo Hello"
+      # "echo Hello"
+      "pytest -m long_test tests/test_hello_world.py::test_hello_world_long_test"
     do
       container_id=$(
         docker run \
