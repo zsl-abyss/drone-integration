@@ -82,7 +82,7 @@ runcmd:
     # "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py::test_constitution_gold"
     # "pytest -m long_test tests/test_hello_world.py::test_hello_world_long_test"
     for command in \
-      "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py::test_constitution_gold"
+      "pytest -m long_test assets/examples/deploy/workflow/tests/test_constitution.py"
     do
       container_id=$(
         docker run \
